@@ -1,0 +1,53 @@
+import * as React from 'react';
+import AspectRatio from '@mui/joy/AspectRatio';
+import Button from '@mui/joy/Button';
+import Card from '@mui/joy/Card';
+import CardContent from '@mui/joy/CardContent';
+import CardOverflow from '@mui/joy/CardOverflow';
+import Chip from '@mui/joy/Chip';
+import Link from '@mui/joy/Link';
+import Typography from '@mui/joy/Typography';
+import { Box } from '@mui/joy';
+import { Label } from '@mui/icons-material';
+
+const CardProduct = ({item}) => {
+    return (
+<Card sx={{ width: '100%', maxWidth: '100%', boxShadow: 'lg' }}>
+      <CardOverflow>
+        <AspectRatio sx={{ minWidth: 100 }}>
+          <img
+            src="https://images.unsplash.com/photo-1593121925328-369cc8459c08?auto=format&fit=crop&w=286"
+            srcSet="https://images.unsplash.com/photo-1593121925328-369cc8459c08?auto=format&fit=crop&w=286&dpr=2 2x"
+            loading="lazy"
+            alt=""
+          />
+        </AspectRatio>
+      </CardOverflow>
+            <CardContent>
+                <Typography textAlign={'left'} level="body-md">{item.nama}</Typography>
+                <Typography textAlign={'left'} level="body-xs">{item.kategori}</Typography>
+               <Typography textAlign="left" level="body-xs" variant="body2">
+            <Box display="flex" alignItems="center">
+                <Label sx={{ marginRight: 0.5 }} />
+                <span>{item.tags.join(", ")}</span>
+            </Box>
+        </Typography>
+
+        <Typography
+          level="title-md"
+          sx={{ mt: 1, fontWeight: 'xl' }}
+        >
+                   Rp. {item.harga}
+        </Typography>
+      
+      </CardContent>
+      <CardOverflow>
+        <Button variant="solid" color="neutral" size="lg">
+          Add to cart
+        </Button>
+      </CardOverflow>
+    </Card>
+    )
+}
+
+export default CardProduct;
