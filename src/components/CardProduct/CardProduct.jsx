@@ -27,14 +27,14 @@ const CardProduct = ({item}) => {
                 <Typography textAlign={'left'} level="body-md">{item.nama}</Typography>
                 <Typography textAlign={'left'} level="body-xs">{item.kategori}</Typography>
                <Typography textAlign="left" level="body-xs" variant="body2">
-            <Box display="flex" alignItems="center">
-                <Label sx={{ marginRight: 0.5 }} />
+            <Box display="flex" sx={{fontSize : '10px'}} alignItems="center">
+                <Label sx={{ fontSize : 12, marginRight: 0.5 }} />
                 <span>{item.tags.join(", ")}</span>
             </Box>
         </Typography>
 
         <Typography
-          level="title-md"
+          level="title-sm"
           sx={{ mt: 1, fontWeight: 'xl' }}
         >
                    Rp. {item.harga}

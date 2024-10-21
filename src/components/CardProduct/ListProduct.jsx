@@ -9,9 +9,10 @@ const ListProduct = ({isLoading, product, setProduct}) => {
            
         gap: 2,
         gridTemplateColumns: {
-          xs: 'repeat(3, 1fr)',  // 2 columns on extra-small screens (mobile)
-          sm: 'repeat(4, 1fr)',  // 3 columns on small screens
-          md: 'repeat(5, 1fr)',  // 4 columns on medium screens and up
+          xs: 'repeat(2, 1fr)',  // 2 columns on extra-small screens (mobile)
+          sm: 'repeat(3, 1fr)',  // 3 columns on small screens
+          md: 'repeat(4, 1fr)',  // 4 columns on medium screens and up
+          lg :'repeat(5, 1fr)'
         },
       }}
       >
