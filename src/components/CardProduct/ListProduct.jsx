@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Card, CardOverflow, Skeleton, Button, CardContent, Typography, AspectRatio } from '@mui/joy';
 import CardProduct from './CardProduct';
-const ListProduct = ({isLoading, product, setProduct}) => {
+const ListProduct = ({totalCartItems, setTotalCartItems, isLoading, product, setProduct}) => {
   return (
     <Box
       sx={{
@@ -19,7 +19,7 @@ const ListProduct = ({isLoading, product, setProduct}) => {
        {
       isLoading ? (
           // Skeleton loading untuk Card
-          Array(6).fill('').map((_, index) => (
+          Array(12).fill('').map((_, index) => (
               <Card key={index} sx={{ width: '100%', maxWidth: '100%', boxShadow: 'lg', overflow: 'hidden' }}>
               <CardOverflow>
                 <AspectRatio sx={{ minWidth: 100 }}>
@@ -53,7 +53,7 @@ const ListProduct = ({isLoading, product, setProduct}) => {
           product.length > 0 ? (
             product.map((item, index) => (
               <Box key={index} sx={{ gridColumn: 'span 1', p: 1 }}>
-                <CardProduct item={item} />
+                <CardProduct totalCartItems={totalCartItems} setTotalCartItems={setTotalCartItems} item={item} />
               </Box>
             ))
           ) : ''

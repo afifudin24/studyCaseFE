@@ -13,10 +13,11 @@ import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import '@fontsource/inter' // This ensures the font is imported
 import { hover } from '@testing-library/user-event/dist/hover'
-const TopBar = () => {
+const TopBar = ({totalCartItems, setTotalCartItems}) => {
   const isLogin = useSelector(state => state.auth.isLogin)
   const location = useLocation()
   // const [isLogin, setIsLogin] = useState(false);
+  console.log(totalCartItems);
   return (
     <Sheet
       sx={{
@@ -124,14 +125,15 @@ const TopBar = () => {
                     transition: 'background-color 0.3s ease' // Berikan efek transisi yang smooth
                   }}
                 >
-                  <Badge color='neutral' badgeContent={3}>
+                  <Badge color='neutral' badgeContent={totalCartItems}>
                     <ShoppingCart />
                   </Badge>
                 </Button>
               </ListItem>
             ) : (
               <ListItem role='none' sx={{ marginInlineStart: 'auto' }}>
-                <Button
+                <Link to={'/login'}>
+                  <Button
                   sx={{
                     backgroundColor: 'white',
                     color: 'slategrey',
@@ -140,9 +142,10 @@ const TopBar = () => {
                       color: 'white' // Ganti warna teks saat di-hover
                     }
                   }}
-                >
+                  >
                   Login
                 </Button>
+                  </Link>
               </ListItem>
             )}
           </List>

@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Sheet, Input, Button, Typography, Box } from '@mui/joy';
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
-const SearchBar = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+const SearchBar = ({handleSearch, chooseKategori, setChooseKategori, searchValue, setSearchValue}) => {
+  // const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearch = () => {
-    // Handle the search logic here
-    console.log('Searching for:', searchTerm);
-  };
+  // const handleSearch = () => {
+  //   // Handle the search logic here
+  //   console.log('Searching for:', searchTerm);
+  // };
 
   return (
     <Sheet
@@ -24,7 +24,10 @@ const SearchBar = () => {
       }}
       >
           <Box width={'20%'}>
-       <Select defaultValue="kategori" >
+        <Select value={chooseKategori} defaultValue="kategori" onChange={(e, newValue) => {
+          setChooseKategori(newValue)
+          // console.log(newValue);
+       }} >
       <Option value="kategori">Kategori</Option>
       <Option value="food">Food</Option>
       <Option value="drink">Drink</Option>
@@ -34,8 +37,8 @@ const SearchBar = () => {
           <Box display={'flex'} width={'80%'} >
               <Input
         placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
         sx={{ flex: 1, marginRight: '10px' }}
       />
       <Button onClick={handleSearch} variant="solid" color="neutral">

@@ -1,4 +1,5 @@
-import * as React from 'react'
+import * as React from 'react';
+import { useEffect } from 'react';
 import { useState, useCallback, useRef, useLayoutEffect } from 'react'
 import {
   Box,
@@ -10,9 +11,11 @@ import {
   Select,
   Option,
   FormControl,
-  FormLabel
-} from '@mui/joy'
-import List from '@mui/joy/List'
+  FormLabel,
+  Snackbar
+} from '@mui/joy';
+
+import List from '@mui/joy/List';
 import Accordion, { accordionClasses } from '@mui/joy/Accordion'
 import AccordionDetails from '@mui/joy/AccordionDetails'
 import AccordionGroup from '@mui/joy/AccordionGroup'
@@ -29,8 +32,15 @@ import Divider from '@mui/joy/Divider'
 import Tooltip from '@mui/joy/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { EditOutlined } from '@mui/icons-material'
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded'
-function Profile () {
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
+import { logout } from '../app/features/Auth/actions';
+function Profile() {
+ const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [showSnackBar, setShowSnackBar] = useState(false);
+ 
   const orders = [
     {
       kodeOrder: 'ORD-001',
@@ -62,8 +72,18 @@ function Profile () {
         { name: 'Item F', qty: 4, price: 90 }
       ]
     }
-  ]
+  ];
 
+  const handleLogout = () => {
+      dispatch(logout()); // Dispatch loginSuccess action on successful login
+    setShowSnackBar(true);
+    setTimeout(() => {
+      navigate('/');
+    }, 1000);
+  }
+    const handleSnackbarClose = () => {
+    setShowSnackBar(false); // Close Snackbar
+  };
   const totalPrice = orders.reduce(
     (total, item) => total + item.qty * item.price,
     0
@@ -152,17 +172,14 @@ function Profile () {
                 justifyContent={'end'}
                 alignContent={'flex-end'}
               >
+              <Button variant='outlined' color='primary'>Invoice</Button>
                 <Box>
                   <Tooltip title='Delete'>
                     <IconButton>
                       <DeleteIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip>
-                    <IconButton>
-                      <EditOutlined />
-                    </IconButton>
-                  </Tooltip>
+                  
                 </Box>
               </Box>
             </AccordionDetails>
@@ -522,7 +539,17 @@ function Profile () {
     )
   }
 
-  const Logout = () => <div>Logout Component</div>
+  const Logout = () => {
+    return (
+       <Box
+        margin={'0 10px'}
+        sx={{ backgroundColor: 'neutral.50' }}
+      >
+        <Typography level='body-md'>Yakin Mau Logout?</Typography>
+        <Button onClick={handleLogout}  variant='solid' color='neutral' sx={{marginY : '10px'}}>Logout</Button>
+      </Box>
+    )
+  }
   const [list, setList] = useState([
     { name: 'Profil', component: <Profil /> },
     { name: 'Pemesanan', component: <Pemesanan /> },
@@ -612,6 +639,14 @@ function Profile () {
           </Box>
         </Box>
       </Box>
+        <Snackbar
+        open={showSnackBar}
+        onClose={handleSnackbarClose}
+        color='success'
+        variant='solid'
+        autoHideDuration={3000} // Closes automatically after 3 seconds
+        message="Logout Sukses!" // Message to display
+      > Logout Sukses! </Snackbar>
     </div>
   )
 }

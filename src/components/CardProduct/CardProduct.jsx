@@ -10,7 +10,11 @@ import Typography from '@mui/joy/Typography';
 import { Box } from '@mui/joy';
 import { Label } from '@mui/icons-material';
 
-const CardProduct = ({item}) => {
+const CardProduct = ({ totalCartItems, setTotalCartItems, item }) => {
+  const handleAddToCart = () => {
+    setTotalCartItems((prev) => prev + 1);
+    // console.log(setTotalCartItems);
+  }
     return (
 <Card sx={{ width: '100%', maxWidth: '100%', boxShadow: 'lg' }}>
       <CardOverflow>
@@ -42,7 +46,7 @@ const CardProduct = ({item}) => {
       
       </CardContent>
       <CardOverflow>
-        <Button variant="solid" color="neutral" size="lg">
+        <Button onClick={handleAddToCart} variant="solid" color="neutral" size="lg">
           Add to cart
         </Button>
       </CardOverflow>
