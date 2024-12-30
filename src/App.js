@@ -1,8 +1,9 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { Sheet, Typography, Button } from '@mui/joy';
 import '@fontsource/inter';
+import { useNavigate } from 'react-router-dom';
 import TopBar from './components/TopBar/TopBar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -10,15 +11,14 @@ import Login from './pages/Login';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import authController from './app/api/auth/authController';
 const App = () => {
   const [totalCartItems, setTotalCartItems] = useState(2);
-  return (
-    <div>
-      <TopBar
-        totalCartItems={totalCartItems}
-        setTotalCartItems={setTotalCartItems}
-      />
+  const navigate = useNavigate();
 
+return (
+    <div>
       <div>
         <Routes>
           <Route
@@ -30,10 +30,31 @@ const App = () => {
               />
             }
           />{' '}
-          <Route path="/profile" element={<Profile />} />{' '}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />{' '}
-          <Route path="/cart" element={<Cart />} />{' '}
-          <Route path="/checkout" element={<Checkout />} />{' '}
           <Route path="/*" element={<NotFound />} />
         </Routes>
       </div>

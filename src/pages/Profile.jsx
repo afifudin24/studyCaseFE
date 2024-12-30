@@ -14,7 +14,7 @@ import {
   FormLabel,
   Snackbar
 } from '@mui/joy';
-
+import TopBar from '../components/TopBar/TopBar';
 import List from '@mui/joy/List';
 import Accordion, { accordionClasses } from '@mui/joy/Accordion'
 import AccordionDetails from '@mui/joy/AccordionDetails'
@@ -36,11 +36,20 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { logout } from '../app/features/Auth/actions';
+import authService from '../app/api/auth/authService';
+import deliveryAddressService from '../app/api/deliveryAddress/deliveryAddressService';
+import ZoneServices from '../app/api/zoneServices/zoneServices';
 function Profile() {
  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showSnackBar, setShowSnackBar] = useState(false);
- 
+  const [snackbarMessage, setSnackbarMessage] = useState(''); // State for dynamic Snackbar message
+  const [snackbarColor, setSnackbarColor] = useState(''); // State for dynamic Snackbar message
+  const [isLogin, setIsLogin] = useState(true);
+  const [provinsi, setProvinsi] = useState([]);
+  const [kecamatan, setKecamatan] = useState([]);
+  const [kabupaten, setKabupaten] = useState([]);
+  const [totalCartItem, setTotalCartItems] = useState(2);
   const orders = [
     {
       kodeOrder: 'ORD-001',
@@ -74,12 +83,34 @@ function Profile() {
     }
   ];
 
-  const handleLogout = () => {
-      dispatch(logout()); // Dispatch loginSuccess action on successful login
-    setShowSnackBar(true);
-    setTimeout(() => {
-      navigate('/');
-    }, 1000);
+
+
+  const handleLogout = async () => {
+    // dispatch(logout()); // Dispatch loginSuccess action on successful login
+    try {
+      const response = await authService.logout();
+      console.log(response);
+      if (response.data.error === 1) {
+        setShowSnackBar(true);
+        setSnackbarMessage(response.data.message);
+        setSnackbarColor('danger');
+      } else {
+        setShowSnackBar(true);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+         setSnackbarMessage(response.data.message);
+        setSnackbarColor('success');
+        setTimeout(() => {
+          navigate('/');
+          }, 1000);
+      }
+    } catch (err) { 
+      console.log(err);
+    }
+    
+    // setTimeout(() => {
+    //   navigate('/');
+    // }, 1000);
   }
     const handleSnackbarClose = () => {
     setShowSnackBar(false); // Close Snackbar
@@ -210,10 +241,16 @@ function Profile() {
     const [isAddAddress, setIsAddAddress] = useState(false)
     const [open, setOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+      const [addressList, setAddressList] = useState([]);
     const [selectAddress, setSelectAddress] = useState({})
-    const provinsiList = ['Jawa Barat', 'Jawa Tengah', 'Jawa Timur', "DKI Jakarta"] // Contoh data
-    const kabupatenList = ['Bandung', 'Cirebon', 'Bogor', 'Jakarta Selatan'] // Contoh data
-    const kecamatanList = ['Kecamatan A', 'Kecamatan B', 'Kecamatan C', "Kebayoran Baru"] // Contoh data
+    const [provinsi, setProvinsi] = useState([]);
+    const [selectedProvinsi, setSelectedProvinsi] = useState(null);
+    const [kabupaten, setKabupaten] = useState([]);
+    const [selectedKabupaten, setSelectedKabupaten] = useState(null);
+    const [kecamatan, setKecamatan] = useState([]);
+    const [selectedKecamatan, setSelectedKecamatan] = useState(null);
+    const [kelurahan, setkelurahan] = useState([]);
+    const [selectedKelurahan, setSelectedKelurahan] = useState(null)
     const [formHeight, setFormHeight] = useState(0)
     const formRef = useRef(null)
     const chooseAddress = (address, action) => {
@@ -228,6 +265,57 @@ function Profile() {
       }
     }
 
+    const getAddress = async () => {
+      try {
+        const response = await deliveryAddressService.getDeliveryAddress();
+        console.log('address', response);
+        setAddressList(response.data);
+      } catch (err) { 
+        console.log(err);
+        }
+    }
+      const getProvinsi = async () => {
+    try {
+      const response = await ZoneServices.getProvinces();
+      const data = response;
+      console.log(data);
+      setProvinsi(data);
+
+      // setProvinsi(response);
+    } catch (err) {
+      console.log(err);
+    }
+    }
+    const getCountry = async () => {
+      try {
+        const response = await ZoneServices.getCountry(selectedProvinsi);
+        console.log('kabupaten', response);
+        const data = response;
+        setKabupaten(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    const getDistrict = async () => {
+      try {
+        const response = await ZoneServices.getDistrict(selectedKabupaten);
+        console.log(response);
+        const data = response;
+        setKecamatan(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    const getVillages = async () => {
+      try {
+        const response = await ZoneServices.getVillages(selectedKecamatan);
+        console.log(response);
+        const data = response;
+        setkelurahan(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
     const deleteAddress = () => {
       const filteredAddress = addresses.filter(item => item === selectAddress);
       console.log(filteredAddress);
@@ -260,15 +348,26 @@ function Profile() {
       detailAlamat: '',
       provinsi: '',
       kabupaten: '',
-      kecamatan: ''
+      kecamatan: '',
+      kelurahan : ''
     })
 
     const handleInputChange = (e) => {
-      const { name, value } = e.target
-      if (isEdit) {
-        setSelectAddress(prev => ({ ...prev, [name]: value }));
+      const { name, value, id } = e.target
+      console.log(value);
+      if (name === 'provinsi') {
+        setSelectedProvinsi(id? id : '');
+      } else if (name === 'kabupaten') {
+        setSelectedKabupaten(id ? id : '');
+      } else if(name === 'kecamatan') {
+        setSelectedKecamatan(id? id : '');
       } else {
-        setNewAddress(prev => ({ ...prev, [name]: value }))
+        setSelectedKabupaten(id ? id : '');
+      }
+      if (isEdit) {
+        setSelectAddress(prev => ({ ...prev, [name]: value? value : '' }));
+      } else {
+        setNewAddress(prev => ({ ...prev, [name]: value? value : '' }))
       }
     }
 
@@ -278,15 +377,15 @@ function Profile() {
       if (isEdit) {
         updateAddress(selectAddress);
       } else {
-          console.log(newAddress)
+          console.log('ini address baru', newAddress)
       console.log(addresses)
       // Update addresses state with new address
-      setAddresses(prev => [...prev, newAddress])
+      // setAddresses(prev => [...prev, newAddress])
 
       // Reset form
       setNewAddress({
         name: '',
-        detailAlamat: '',
+        detail: '',
         provinsi: '',
         kabupaten: '',
         kecamatan: ''
@@ -301,6 +400,31 @@ function Profile() {
       setIsAddAddress(true)
       //  console.log(addresses);
     }
+    useEffect(() => {
+      getAddress();
+    }, []);
+    
+    useEffect(() => {
+      getProvinsi();
+    }, [])
+
+    useEffect(() => {
+      if (selectedProvinsi) {
+        getCountry();
+        console.log(newAddress);
+      }
+    }, [selectedProvinsi]);
+
+    useEffect(() => {
+      if (selectedKabupaten) {
+        getDistrict();
+      }
+    }, [selectedKabupaten]);
+    useEffect(() => {
+      if (selectedKecamatan) {
+        getVillages();
+      }
+    }, [selectedKecamatan]);
     return (
       <Box
         margin={'0 10px'}
@@ -342,7 +466,7 @@ function Profile() {
           <Textarea
             required
             placeholder='Detail Alamat'
-            minRows={4}
+            minRows={6}
             name='detailAlamat'
             value={isEdit ? selectAddress.detailAlamat : newAddress.detailAlamat}
             onChange={handleInputChange}
@@ -357,16 +481,23 @@ function Profile() {
             placeholder='Pilih Provinsi'
             value={isEdit ? selectAddress.provinsi : newAddress.provinsi}
             name='provinsi'
-            onChange={(e, newValue) =>
-              handleInputChange({
-                target: { name: 'provinsi', value: newValue }
-              })
-            }
+           onChange={(e, newValue) => {
+      // Misalkan Anda ingin menambahkan id provinsi yang dipilih
+      const selectedProvinsi = provinsi.find(prov => prov.name === newValue);
+      handleInputChange({
+        target: {
+          name: 'provinsi',
+          value: newValue,
+          id: selectedProvinsi ? selectedProvinsi.id : null, // Menambahkan id provinsi
+          type: 'provinsi', // Menambahkan tipe
+        }
+      });
+    }}
             required
           >
-            {provinsiList.map(prov => (
-              <Option key={prov} value={prov}>
-                {prov}
+            {provinsi.map(prov => (
+              <Option key={prov.id} value={prov.name}>
+                {prov.name}
               </Option>
             ))}
           </Select>
@@ -378,16 +509,23 @@ function Profile() {
             placeholder='Pilih Kabupaten'
             value={isEdit ? selectAddress.kabupaten : newAddress.kabupaten}
             name='kabupaten'
-            onChange={(e, newValue) =>
-              handleInputChange({
-                target: { name: 'kabupaten', value: newValue }
-              })
-            }
+           onChange={(e, newValue) => {
+      // Misalkan Anda ingin menambahkan id provinsi yang dipilih
+      const selectedKabupaten = kabupaten.find(kab => kab.name === newValue);
+      handleInputChange({
+        target: {
+          name: 'kabupaten',
+          value: newValue,
+          id: selectedKabupaten ? selectedKabupaten.id : null, // Menambahkan id provinsi
+          type: 'kabupaten', // Menambahkan tipe
+        }
+      });
+    }}
             required
           >
-            {kabupatenList.map(kab => (
-              <Option key={kab} value={kab}>
-                {kab}
+            {kabupaten.map(kab => (
+              <Option key={kab.id} value={kab.name}>
+                {kab.name}
               </Option>
             ))}
           </Select>
@@ -400,16 +538,51 @@ function Profile() {
                     value={isEdit ? selectAddress.kecamatan : newAddress.kecamatan}
                     
             name='kecamatan'
-            onChange={(e, newValue) =>
-              handleInputChange({
-                target: { name: 'kecamatan', value: newValue }
-              })
-            }
+              onChange={(e, newValue) => {
+      // Misalkan Anda ingin menambahkan id provinsi yang dipilih
+      const selectedKecamatan = kecamatan.find(kec => kec.name === newValue);
+      handleInputChange({
+        target: {
+          name: 'kecamatan',
+          value: newValue,
+          id: selectedKecamatan ? selectedKecamatan.id : null, // Menambahkan id provinsi
+          type: 'kecamatan', // Menambahkan tipe
+        }
+      });
+    }}
             required
           >
-            {kecamatanList.map(kec => (
-              <Option key={kec} value={kec}>
-                {kec}
+            {kecamatan.map(kec => (
+              <Option key={kec.id} value={kec.name}>
+                {kec.name}
+              </Option>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ marginBottom: '10px' }}>
+          <FormLabel>Kelurahan</FormLabel>
+          <Select
+            placeholder='Pilih Kelurahan'
+                    value={isEdit ? selectAddress.kelurahan : newAddress.kelurahan}
+                    
+            name='kelurahan'
+              onChange={(e, newValue) => {
+      // Misalkan Anda ingin menambahkan id provinsi yang dipilih
+      const selectedKelurahan = kelurahan.find(kel => kel.name === newValue);
+      handleInputChange({
+        target: {
+          name: 'kelurahan',
+          value: newValue,
+          id: selectedKelurahan ? selectedKelurahan.id : null, // Menambahkan id provinsi
+          type: 'kelurahan', // Menambahkan tipe
+        }
+      });
+    }}
+            required
+          >
+            {kelurahan.map(kel => (
+              <Option key={kel.id} value={kel.name}>
+                {kel.name}
               </Option>
             ))}
           </Select>
@@ -458,7 +631,7 @@ function Profile() {
               }
             })}
           >
-            {addresses.map((address, index) => (
+            {addressList.map((address, index) => (
               <Accordion key={index}>
                 <AccordionSummary
                   // expandIcon={<ExpandMoreIcon />}
@@ -466,12 +639,12 @@ function Profile() {
                   id={`panel-${index}-header`}
                 >
                   <Typography level='title-sm'>
-                    {address.name} - {address.provinsi}, {address.kabupaten}
+                    {address.nama} 
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Typography level='body-xs'>
-                    Detail Alamat: {address.detailAlamat}
+                    Detail Alamat: {address.detail}
                   </Typography>
                   <Typography level='body-xs'>
                     Provinsi: {address.provinsi}
@@ -582,6 +755,11 @@ function Profile() {
 
   return (
     <div>
+        <TopBar
+        totalCartItems={totalCartItem}
+        setTotalCartItems={setTotalCartItems}
+        isLogin={isLogin}
+      />
       <Box
         border={1}
         borderColor={'darkgray'}

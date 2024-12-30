@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sheet, Input, Button, Typography, Box } from '@mui/joy';
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
-const SearchBar = ({handleSearch, chooseKategori, setChooseKategori, searchValue, setSearchValue}) => {
+const SearchBar = ({handleSearch, handleEditSearch, chooseKategori, setChooseKategori, categoryList, searchValue, setSearchValue}) => {
   // const [searchTerm, setSearchTerm] = useState('');
 
   // const handleSearch = () => {
@@ -24,13 +24,18 @@ const SearchBar = ({handleSearch, chooseKategori, setChooseKategori, searchValue
       }}
       >
           <Box width={'20%'}>
-        <Select value={chooseKategori} defaultValue="kategori" onChange={(e, newValue) => {
+        <Select value={chooseKategori} defaultValue="category" onChange={(e, newValue) => {
           setChooseKategori(newValue)
           // console.log(newValue);
        }} >
-      <Option value="kategori">Kategori</Option>
-      <Option value="food">Food</Option>
-      <Option value="drink">Drink</Option>
+        
+      <Option value="category">Category</Option>
+      {
+            categoryList.map(item => (
+              <Option value={item.name}>{item.name}</Option>
+
+            ))
+          }
           </Select>  
           </Box>
        
@@ -38,7 +43,7 @@ const SearchBar = ({handleSearch, chooseKategori, setChooseKategori, searchValue
               <Input
         placeholder="Search..."
         value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
+        onChange={(e) => handleEditSearch(e.target.value)}
         sx={{ flex: 1, marginRight: '10px' }}
       />
       <Button onClick={handleSearch} variant="solid" color="neutral">

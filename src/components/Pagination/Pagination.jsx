@@ -32,6 +32,7 @@ const Pagination = ({ currentPage, setCurrentPage, totalPages }) => {
               color={'neutral'}
           variant={currentPage === index + 1 ? 'solid' : 'outlined'}
           onClick={() => handlePageChange(index + 1)}
+          
         >
           {index + 1}
         </Button>
@@ -41,7 +42,7 @@ const Pagination = ({ currentPage, setCurrentPage, totalPages }) => {
       <IconButton
         variant="outlined"
         onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={currentPage === totalPages || currentPage > totalPages}
       >
         ›
       </IconButton>

@@ -13,11 +13,11 @@ import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import '@fontsource/inter' // This ensures the font is imported
 import { hover } from '@testing-library/user-event/dist/hover'
-const TopBar = ({totalCartItems, setTotalCartItems}) => {
-  const isLogin = useSelector(state => state.auth.isLogin)
+const TopBar = ({totalCartItems, setTotalCartItems, isLogin}) => {
+  
   const location = useLocation()
   // const [isLogin, setIsLogin] = useState(false);
-  console.log(totalCartItems);
+  console.log(isLogin);
   return (
     <Sheet
       sx={{

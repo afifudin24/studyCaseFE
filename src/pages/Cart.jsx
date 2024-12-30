@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import baseUrl from "../app/api/BaseUrl";
 import {
     Box,
     Typography,
@@ -12,45 +13,60 @@ import {
     FormControl,
     FormLabel
 } from '@mui/joy';
-
+import authController from "../app/api/auth/authController";
+import TopBar from "../components/TopBar/TopBar";
+import cartService from "../app/api/cart/cartService";
 const Cart = () => {
      const [keranjang, setKeranjang] = useState([
     { id : 1, namaBarang: 'namabarang1', qty: 3, hargaPerItem: 4000 },
     { id : 2, namaBarang: 'namabarang2', qty: 2, hargaPerItem: 5000 },
     { id : 3,  namaBarang: 'namabarang3', qty: 1, hargaPerItem: 3000 },
-  ]);
+     ]);
+  const [cart, setCart] = useState([]);
+
+  const [cartCount, setCartCount] = useState(0);
+  const [isLogin, setIsLogin] = useState(false);
+   const [userData, setUser] = useState(null);
+  const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
  // useEffect untuk menghitung subtotal setiap kali keranjang berubah
   useEffect(() => {
-    const total = keranjang.map(item => item.qty * item.hargaPerItem).reduce((acc, curr) => acc + curr, 0);
+    const total = cart.map(item => item.qty * item.price).reduce((acc, curr) => acc + curr, 0);
     setSubtotal(total);
-  }, [keranjang]); // Dependensi keranjang
+  }, [cart]); // Dependensi keranjang
 
   // State untuk subtotal
     const [subtotal, setSubtotal] = useState(0);
   const decOrIncQty = (action, item) => {
+  
     console.log(item);
   // Cari item dalam keranjang berdasarkan ID atau nama
-  const foundItem = keranjang.find((cartItem) => cartItem.id === item.id);
+  const foundItem = cart.find((cartItem) => cartItem._id === item._id);
 
   if (foundItem) {
     if (action === "dec") {
       // Kurangi kuantitas jika kuantitas lebih dari 1
-      if (foundItem.qty > 1) {
+ 
         foundItem.qty -= 1;
-      } else {
-        // Jika kuantitas mencapai 0, Anda mungkin ingin menghapus item
-        console.log("Hapus item dari keranjang");
-      }
+          
+  
     } else if (action === "inc") {
       // Tambah kuantitas
       foundItem.qty += 1;
     }
+     const data = {
+      productId: item.product._id,
+      qty : foundItem.qty
+    }
+    updateCart(data);
+  
+
   } else {
     console.log("Item tidak ditemukan dalam keranjang");
-  }
-
+    }
+     
   // Update state dengan data baru
-  setKeranjang([...keranjang]);
+  setCart([...cart]);
 };
 
   const deleteItemCart = (item) => {
@@ -58,15 +74,79 @@ const Cart = () => {
     console.log(filteredCart);
     setKeranjang(filteredCart);
   }
+    useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await authController.checkMe();
+        console.log(response);
+        if (response.data.error === 1) {
+          setError(new Error('Failed to fetch user data'));
+          setIsLogin(false);
+        } else {
+          setUser(response.data);
+          setIsLogin(true);
+        }
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+    }, []);
+  const getCart = async () => {
+    try {
+      const response = await cartService.getCart();
+      console.log(response);
+      if (!response.data.error) {
+        setCart(response.data.data);
+          setCartCount(response.data.count);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  const updateCart = async (data) => {
+    try {
+      const response = await cartService.updateCart(data);
+      console.log(response);
+      if (response.data.qty === 0) {
+        setCart([]);
+        getCart([]);
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  const deleteCart = async (item) => {
+   
+    try {
+      const response = await cartService.deleteCart(item.product._id);
+      console.log(response);
+    }catch(err){
+      console.log(err);
+    }
+  }
+  useEffect(() => {
+    getCart();
+  }, []);
     return (
-            <div>
+      <div>
+        <TopBar isLogin={isLogin} totalCartItems={cartCount}/>
       <Box
         border={1}
                 borderColor={'darkgray'}
                 overflow={'hidden'}
         borderRadius={'5px'}
         marginTop={'80px'}
-        width={'70%'}
+         width={{
+        xs: '80%',  // untuk ukuran extra-small
+        sm: '80%',   // untuk ukuran small
+        md: '80%',   // untuk ukuran medium
+        lg: '60%',   // untuk ukuran large
+        xl: '60%'    // untuk ukuran extra-large
+    }}
         marginX={'auto'}
       >
         <Box
@@ -78,37 +158,43 @@ const Cart = () => {
             backgroundColor: '#eee'
           }}
         >
-          <Typography fontWeight={'bold'}>Keranjang Belanja</Typography>
+          <Typography fontWeight={'bold'}>Cart</Typography>
                 </Box>
                 <Box padding={'10px'}>
-                    <Typography>Sub Total {subtotal}</Typography>
+                    <Typography>Sub Total : Rp. {subtotal.toLocaleString()}</Typography>
                      <Table aria-label="basic table">
       <thead>
         <tr>
           <th style={{width: '10%'}}>#</th>
-          <th>Gambar</th>
-          <th>Barang</th>
-          <th>Harga Per Item</th>
+          <th>Image</th>
+          <th>Product</th>
+          <th>Price Per Item</th>
           <th>QTY</th>
          
         </tr>
       </thead>
                         <tbody>
-                            {
-                                keranjang.length > 0 ? (
-                                    keranjang.map((item, index) => (
-                                                <tr key={index}>
-          <td><Button onClick={() => deleteItemCart(item)} color="danger">-</Button></td>
-          <td>Gambar</td>
-                                            <td>{ item.namaBarang}</td>
-                                            <td>{ item.hargaPerItem}</td>
-                                            <td> <Button onClick={() => decOrIncQty("dec", item)} variant="outlined" color="neutral">-</Button> { item.qty} <Button variant="outlined" color="neutral" onClick={()  => decOrIncQty("inc", item)}>+</Button></td>
-         
+                         {
+    cart.length > 0 ? (
+        cart.map((item, index) => (
+            <tr key={index}>
+                <td><Button onClick={() => deleteCart(item)} color="danger">-</Button></td>
+            <td><img style={{width : '100px'}} src={`${baseUrl}/images/products/${item.image_url}`} alt="" /></td>
+                <td>{item.name}</td>
+                <td>Rp. {item.price.toLocaleString()}</td>
+                <td>
+                    <Button sx={{marginX : '5px'}} onClick={() => decOrIncQty("dec", item)} variant="outlined" color="neutral">-</Button>
+                    {item.qty}
+                    <Button sx={{marginX : '5px'}} variant="outlined" color="neutral" onClick={() => decOrIncQty("inc", item)}>+</Button>
+                </td>
+            </tr>
+        ))
+    ) : (
+        <tr>
+            <td colSpan="5" style={{ textAlign: 'center' }}>Tidak Ada Data</td>
         </tr>
-                                    ))
-                                ) : 'Tidak Ada Data'
-                            }
-    
+    )
+}
       
       </tbody>
             </Table>

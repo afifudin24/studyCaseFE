@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Button,
   Box,
@@ -8,27 +8,39 @@ import {
   FormLabel,
   Table
 } from '@mui/joy'
-
+import TopBar from '../components/TopBar/TopBar';
+import cartService from '../app/api/cart/cartService';
+import authController from '../app/api/auth/authController';
+import deliveryAddressService from '../app/api/deliveryAddress/deliveryAddressService';
+import deliveryPriceService from '../app/api/deliveryPrice/deliveryPriceService';
+import orderService from '../app/api/order/orderService';
 const Checkout = () => {
   const [step, setStep] = useState(1) // To track the current step in the process
-  const [selectedAddresses, setSelectedAddresses] = useState([]) // Track selected addresses
+  const [selectedAddresses, setSelectedAddresses] = useState(null) // Track selected addresses
   const [confirmed, setConfirmed] = useState(false)
-
+  const [cart, setCart] = useState([]);
+  const [subtotal, setSubtotal] = useState(0);
+  const [isLogin, setIsLogin] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [deliveryAddress, setDeliveryAddress] = useState([]);
+    const [userData, setUser] = useState(null);
+  const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
   // Sample list of addresses
-  const addresses = [
-    { id: 1, name: 'Alamat Rumah', label: '123 Main St, Cityville' },
-    { id: 2, name: 'Alamat Kantor', label: '456 Elm St, Townsville' },
-    { id: 3, name: 'Alamat Cadangan', label: '789 Oak St, Hamlet' }
-  ]
+
+    useEffect(() => {
+    const total = cart.map(item => item.qty * item.price).reduce((acc, curr) => acc + curr, 0);
+    setSubtotal(total);
+  }, [cart]); 
 
   // Handle selecting and deselecting addresses
-  const handleAddressSelect = id => {
-    setSelectedAddresses(
-      prevSelected =>
-        prevSelected.includes(id)
-          ? prevSelected.filter(addressId => addressId !== id) // Remove if already selected
-          : [...prevSelected, id] // Add if not selected
-    )
+  const handleAddressSelect = (id) => {
+    if (selectedAddresses === id) {
+      setSelectedAddresses(null);
+    } else {
+      setSelectedAddresses(id);
+    }
   }
 
   // Proceed to the next step
@@ -43,8 +55,9 @@ const Checkout = () => {
 
   // Confirm the details
   const handleConfirm = () => {
-    setConfirmed(true)
-    handleNext()
+    confirmOrder();
+    // setConfirmed(true)
+    // handleNext()
   }
 
   // Submit payment and show receipt
@@ -52,9 +65,89 @@ const Checkout = () => {
     // Placeholder for payment logic
     handleNext()
   }
+    const getCart = async () => {
+    try {
+      const response = await cartService.getCart();
+      console.log(response);
+      if (!response.data.error) {
+        setCart(response.data.data);
+          setCartCount(response.data.count);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  const getDeliveryAddress = async () => {
+    try {
+      const response = await deliveryAddressService.getDeliveryAddress();
+      console.log('alamat', response);
+      setDeliveryAddress(response.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  const getDeliveryPrice = async (kab) => {
+    try {
+      const response = await deliveryPriceService.getDeliveryPrice(kab);
+      console.log(response);
+      if (response.error === 0) {
+        setDeliveryPrice(response.data);
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  const confirmOrder = async () => {
+    const data = {
+      delivery_fee: deliveryPrice.price,
+      delivery_address: selectedAddresses,
+      totalAmount : deliveryPrice.price + subtotal
+    };
+    console.log(data);
+    try {
+      const response = await orderService.postOrder(data);
+      console.log(response);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+    useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await authController.checkMe();
+        console.log(response);
+        if (response.data.error === 1) {
+          setError(new Error('Failed to fetch user data'));
+          setIsLogin(false);
+        } else {
+          setUser(response.data);
+          setIsLogin(true);
+        }
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchUser();
+    }, []);
+  useEffect(() => {
+    getCart();
+    getDeliveryAddress();
+  }, [])
+
+  useEffect(() => {
+    console.log('kocak', selectedAddresses);
+  }, [selectedAddresses]);
+  useEffect(() => {
+    if (selectedAddresses) {
+      getDeliveryPrice(selectedAddresses.kabupaten);
+    }
+  }, [selectedAddresses])
   return (
     <>
+      <TopBar isLogin={isLogin} totalCartItems={cartCount}/>
       <div>
         <Box
           border={1}
@@ -62,7 +155,7 @@ const Checkout = () => {
           overflow={'hidden'}
           borderRadius={'5px'}
           marginTop={'80px'}
-          width={'60%'}
+          width={{ xs: '80%', lg: '60%' }} // 80% untuk ukuran kecil, 60% untuk ukuran besar
           marginX={'auto'}
         >
           <Box
@@ -81,9 +174,9 @@ const Checkout = () => {
               {step === 1 && (
                 <Box>
                   <Typography variant='h5'>Pilih Alamat Pengiriman</Typography>
-                  {selectedAddresses.length > 0 ? (
+                  {selectedAddresses ? (
                     <Typography variant='body1'>
-                      Alamat Terpilih: {selectedAddresses.length}
+                      Alamat Terpilih: {selectedAddresses.nama}
                     </Typography>
                   ) : (
                     ''
@@ -96,23 +189,27 @@ const Checkout = () => {
                           <th style={{ width: '10%' }}>#</th>
                           <th>Nama</th>
                           <th>Alamat</th>
+                          <th>Detail</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {addresses.map(address => (
+                        {deliveryAddress.map(address => (
                           <tr>
                             {/* <FormControl key={address.id} fullWidth sx={{ marginBottom: 1 }}> */}
                             <td>
                               <Checkbox
-                                checked={selectedAddresses.includes(address.id)}
-                                onChange={() => handleAddressSelect(address.id)}
+                                checked={selectedAddresses == address}
+                                onChange={() => handleAddressSelect(address)}
                               />
                             </td>
                             <td>
-                              <FormLabel>{address.name}</FormLabel>
+                              <FormLabel>{address.nama}</FormLabel>
                             </td>
                             <td>
-                              <FormLabel>{address.label}</FormLabel>
+                              <FormLabel>{address.kelurahan}, {address.kecamatan} {address.kabuupaten} { address.provinsi}</FormLabel>
+                            </td>
+                            <td>
+                              <FormLabel>{address.detail}</FormLabel>
                             </td>
 
                             {/* </FormControl> */}
@@ -126,7 +223,7 @@ const Checkout = () => {
                       onClick={handleNext}
                       variant='solid'
                       color='primary'
-                      disabled={selectedAddresses.length === 0} // Disable if no address is selected
+                      disabled={!selectedAddresses} // Disable if no address is selected
                       sx={{ marginTop: '10px' }}
                     >
                       Selanjutnya
@@ -141,26 +238,31 @@ const Checkout = () => {
                   <Table aria-label='basic table'>
                     <tr>
                       <td>Alamat</td>
-                      <td>
-                        {selectedAddresses.map(id => (
-                            <Typography key={id}>
-                           
-                            {addresses.find(addr => addr.id === id).label}
-                          </Typography>
-                        ))}
-                      </td>
+                    <td>
+  {selectedAddresses? (
+    
+      // Mencari alamat berdasarkan ID
+     
+      <Typography>
+        { selectedAddresses.nama}
+      </Typography>
+    
+  ) : (
+    <Typography>Alamat tidak ditemukan</Typography>
+  )}
+</td>
                     </tr>
                     <tr>
                       <td>Sub Total</td>
-                      <td> Rp. 60000</td>
+                      <td> Rp. {subtotal.toLocaleString()}</td>
                     </tr>
                     <tr>
                       <td>Ongkir</td>
-                      <td>Rp. 23000</td>
+                      <td>Rp. { deliveryPrice.price.toLocaleString()}</td>
                     </tr>
                     <tr>
                       <td>Total</td>
-                      <td>Rp. 83000</td>
+                      <td>Rp. { (deliveryPrice.price + subtotal).toLocaleString()}</td>
                     </tr>
                   </Table>
 
@@ -214,14 +316,18 @@ const Checkout = () => {
                                           <td>
                                               <h3>Afif Waliyudin</h3>
                                               <p>afifrider507@gmail.com</p>
-                                              <p>    {selectedAddresses.map(id => (
-                            <Typography key={id}>
-                           
-                            {addresses.find(addr => addr.id === id).label}
-                          </Typography>
-                        ))} </p>
+                                             
                                           </td>
-                                      </tr>
+                    </tr>
+                    <tr>
+                      <td>Address</td>
+                      <td>
+                         <Typography>
+                           
+                            {selectedAddresses ?  selectedAddresses.nama : ''}
+                          </Typography>
+                      </td>
+                    </tr>
                                       <tr>
                                           <td>Bayar ke</td>
                                           <td>
@@ -257,11 +363,11 @@ const Checkout = () => {
                   </Typography>
                   <Typography>Addresses used for delivery:</Typography>
                   <Box marginTop={'10px'}>
-                    {selectedAddresses.map(id => (
-                      <Typography key={id}>
-                        {addresses.find(addr => addr.id === id).label}
+                   
+                      <Typography>
+                        {selectedAddresses ? selectedAddresses.nama : ''}
                       </Typography>
-                    ))}
+                  
                   </Box>
                   <Button
                     onClick={() => setStep(1)} // Reset to the first step if needed

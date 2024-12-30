@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box, Card, CardOverflow, Skeleton, Button, CardContent, Typography, AspectRatio } from '@mui/joy';
 import CardProduct from './CardProduct';
-const ListProduct = ({totalCartItems, setTotalCartItems, isLoading, product, setProduct}) => {
+const ListProduct = ({modalCartOpen, totalCartItems, setTotalCartItems, isLoading, product, setProduct}) => {
+  console.log('list', modalCartOpen)
   return (
     <Box
       sx={{
@@ -12,7 +13,7 @@ const ListProduct = ({totalCartItems, setTotalCartItems, isLoading, product, set
           xs: 'repeat(2, 1fr)',  // 2 columns on extra-small screens (mobile)
           sm: 'repeat(3, 1fr)',  // 3 columns on small screens
           md: 'repeat(4, 1fr)',  // 4 columns on medium screens and up
-          lg :'repeat(5, 1fr)'
+          lg :'repeat(6, 1fr)'
         },
       }}
       >
@@ -53,10 +54,10 @@ const ListProduct = ({totalCartItems, setTotalCartItems, isLoading, product, set
           product.length > 0 ? (
             product.map((item, index) => (
               <Box key={index} sx={{ gridColumn: 'span 1', p: 1 }}>
-                <CardProduct totalCartItems={totalCartItems} setTotalCartItems={setTotalCartItems} item={item} />
+                <CardProduct modalCartOpen={modalCartOpen} totalCartItems={totalCartItems} setTotalCartItems={setTotalCartItems} item={item} />
               </Box>
             ))
-          ) : ''
+          ) :   <p style={{ textAlign: 'center', marginTop: '20px' }}>Tidak ada data</p>
         )
       }
     

@@ -15,35 +15,73 @@ import {
   FormLabel
 } from '@mui/joy';
 import { loginSuccess } from '../app/features/Auth/actions';
+import authController from '../app/api/auth/authController';
 const Login = () => {
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const navigate = useNavigate();
    const isLogin = useSelector(state => state.auth.isLogin); // Get login status from Redux store
   const [snackbarOpen, setSnackbarOpen] = useState(false); // Snackbar state
+  const [snackbarMessage, setSnackbarMessage] = useState(''); // State for dynamic Snackbar message
+  const [snackbarColor, setSnackbarColor] = useState(''); // State for dynamic Snackbar message
+  
   const [login, setLogin] = useState({
     email: '',
     password: ''
   });
+   const [errors, setErrors] = useState({}); // State for error messages
+    const validate = () => {
+    const newErrors = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!login.email) {
+      newErrors.email = 'Email is required';
+    } else if (!emailPattern.test(login.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!login.password) {
+      newErrors.password = 'Password is required';
+    }
+
+    return newErrors;
+  };
    useEffect(() => {
     if (isLogin) {
       navigate('/'); // Redirect to home if already logged in
     }
   }, [])
-  const handleInputChange = e => {
-    const { name, value } = e.target
-    setLogin(prev => ({ ...prev, [name]: value }))
-  }
-  const handleSubmit = e => {
-    e.preventDefault()
-    console.log(login)
-      if (login.email && login.password) {
-      dispatch(loginSuccess()); // Dispatch loginSuccess action on successful login
-        console.log('Login successful:', login);
-        setSnackbarOpen(true); // Open Snackbar on success
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
+const handleInputChange = e => {
+    const { name, value } = e.target;
+    setLogin(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: '' })); // Clear error when user types
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return; // Stop submission if there are validation errors
     }
+    console.log(login)
+   
+        const response = await authController.login(login);
+        console.log(response)
+        if (response.error === 1) {
+          setSnackbarMessage(response.message);
+          setSnackbarOpen(true); // Open Snackbar on success
+          setSnackbarColor('danger')
+
+        } else {
+          setSnackbarMessage(response.message);
+           setSnackbarOpen(true); // Open Snackbar on success
+          setSnackbarColor('success');
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          setTimeout(() => {
+            navigate('/');
+          }, 500)
+        }
+    
   }
   const handleSnackbarClose = () => {
     setSnackbarOpen(false); // Close Snackbar
@@ -75,7 +113,7 @@ const Login = () => {
             <FormControl>
               <FormLabel>Email</FormLabel>
               <Input
-                required
+              
                 placeholder='Alamat Email'
                 name='email'
                 type='email'
@@ -83,12 +121,13 @@ const Login = () => {
                 onChange={handleInputChange}
                 sx={{ marginBottom: '10px' }}
               />
+               {errors.email && <Typography fontSize={14} color='danger'>{errors.email}</Typography>}
             </FormControl>
 
             <FormControl>
               <FormLabel>Password</FormLabel>
               <Input
-                required
+               
                 placeholder='Password'
                 name='password'
                 type='password'
@@ -96,8 +135,9 @@ const Login = () => {
                 onChange={handleInputChange}
                 sx={{ marginBottom: '10px' }}
               />
+               {errors.password && <Typography  fontSize={14} color='danger'>{errors.password}</Typography>}
             </FormControl>
-            <Button variant='solid' color='neutral' type='submit'>
+            <Button variant='solid' color='neutral'   sx={{ marginY: '10px' }}  type='submit'>
               Login
             </Button>
           </form>
@@ -106,11 +146,11 @@ const Login = () => {
        <Snackbar
         open={snackbarOpen}
         onClose={handleSnackbarClose}
-        color='success'
+        color={snackbarColor}
         variant='solid'
         autoHideDuration={3000} // Closes automatically after 3 seconds
-        message="Login successful!" // Message to display
-      > Login successful! </Snackbar>
+        message={ snackbarMessage} // Message to display
+      > { snackbarMessage} </Snackbar>
     </div>
   )
 }

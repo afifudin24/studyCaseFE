@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Box } from '@mui/joy';
 import Chip from '@mui/joy/Chip';
 import { LocalOffer } from '@mui/icons-material';
-const TagList = ({tags, setTags, chooseTags, setChooseTags}) => {
-   
+import { useLocation, useNavigate } from 'react-router-dom';
+const TagList = ({ tags, setTags, chooseTags, setChooseTags }) => {
+    
+   console.log(tags)
     const handleChipClick = (e) => {
        const cekData = chooseTags.includes(e);
-
     if (cekData) {
        const newTags = chooseTags.filter((item) => item !== e);
             setChooseTags(newTags);
@@ -19,6 +20,7 @@ const TagList = ({tags, setTags, chooseTags, setChooseTags}) => {
     }
     return (
         <Box display={'flex'} gap={1}>
+         
             { 
                 tags.length > 0 ? (
                     tags.map((item, index) => (
@@ -32,7 +34,7 @@ const TagList = ({tags, setTags, chooseTags, setChooseTags}) => {
           >
             <Box display="flex" alignItems="center" padding={'2px'}>
         <LocalOffer sx={{ fontSize: 16, marginRight: 0.5 }} /> {/* Icon with margin */}
-        {item}
+        {item.name}
       </Box>
           </Chip>
                 ))
